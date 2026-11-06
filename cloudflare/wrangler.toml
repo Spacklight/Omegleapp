@@ -8,7 +8,7 @@ directory = "./dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 # Let the Worker see the API before static files.
-run_worker_first = ["/api/*"]
+run_worker_first = ["/api/*", "/google56a3c710582c9ef5.html"]
 
 [[durable_objects.bindings]]
 name = "LOBBY"

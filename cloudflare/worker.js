@@ -57,9 +57,17 @@ export class Lobby {
   }
 }
 
+// Google Search Console ownership file, served exactly as Google expects (no redirect).
+const GOOGLE_FILE = "google56a3c710582c9ef5.html";
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/" + GOOGLE_FILE) {
+      return new Response("google-site-verification: " + GOOGLE_FILE, {
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
     if (url.pathname.startsWith("/api/")) {
       return env.LOBBY.get(env.LOBBY.idFromName("global")).fetch(request);
     }
