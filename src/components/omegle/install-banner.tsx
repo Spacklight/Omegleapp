@@ -98,7 +98,8 @@ export function InstallBanner() {
           </button>
           <a
             href={url}
-            target="_blank"
+            target={/\.apk($|\?)/i.test(url) ? undefined : "_blank"}
+            download={/\.apk($|\?)/i.test(url) ? "Omegle.apk" : undefined}
             rel="noopener noreferrer"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-primary-fg"
             onClick={() => {
