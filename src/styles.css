@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+/* Scan all of src/ for classes. Needed when the app is built from cloudflare/spa, where Tailwind would otherwise only look in that folder. */
+@source "./";
+
+/*
+ * Two palettes. Light is the default; dark switches on with
+ * <html data-theme="dark"> (set by the theme toggle, see components/omegle/theme.ts).
+ * Every colour in the app is one of these variables, so nothing else changes.
+ */
+@theme {
+  --color-bg: #f6f4ec;
+  --color-surface: #ffffff;
+  --color-surface-2: #ebe8dc;
+  --color-fg: #1b1f17;
+  --color-muted: #66655a;
+  --color-primary: #3d7a0a;
+  --color-primary-fg: #ffffff;
+  --color-hot: #d33a1c;
+  --color-line: #d9d5c6;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.35rem;
+}
+
+html {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #121410;
+  --color-surface: #1c221c;
+  --color-surface-2: #262e26;
+  --color-fg: #f3f0e8;
+  --color-muted: #9c988e;
+  --color-primary: #d6ff4a;
+  --color-primary-fg: #17200a;
+  --color-hot: #ff5c39;
+  --color-line: #343b32;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  html {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2 {
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: var(--color-primary);
+    color: var(--color-primary-fg);
+  }
+}
+
+@keyframes radar {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.65;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+.radar {
+  animation: radar 1.8s ease-out infinite;
+}
+
+.stagger > * {
+  animation: rise 520ms ease-out both;
+}
+
+.stagger > *:nth-child(2) {
+  animation-delay: 70ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 140ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 210ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 280ms;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radar,
+  .stagger > * {
+    animation: none;
+  }
+}
+
+.chip-row {
+  scrollbar-width: none;
+}
+.chip-row::-webkit-scrollbar {
+  display: none;
+}
+
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
