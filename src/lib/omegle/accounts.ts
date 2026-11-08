@@ -26,6 +26,9 @@ const WRONG_MAX = 6; // wrong codes before a pause
 const WRONG_PAUSE_MS = 10 * 60_000;
 const HOUR = 3_600_000;
 
+/** Same answer for "not an admin" and "unknown": the admin page does not say which emails are admins. */
+const NOT_ADMIN = { ok: false, status: 403, error: "This email is not allowed to open the admin page." } as const;
+
 const EMAIL = /^[^\s@<>()[\]\\,;:"]{1,64}@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i;
 
 export function cleanEmail(raw: unknown): string | null {
@@ -66,10 +69,11 @@ export class Accounts {
     return this.admins.includes(email);
   }
 
-  /** Email a code to this address. */
-  async start(rawEmail: unknown, ip: string): Promise<Result<{ sent: true }>> {
+  /** Email a code to this address. With `adminOnly`, only admin emails are accepted (and nothing is sent to anyone else). */
+  async start(rawEmail: unknown, ip: string, adminOnly = false): Promise<Result<{ sent: true }>> {
     const email = cleanEmail(rawEmail);
     if (!email) return { ok: false, status: 400, error: "Enter a valid email address." };
+    if (adminOnly && !this.isAdmin(email)) return NOT_ADMIN;
     const now = this.clock();
 
     const mine = (this.sends.get(email) ?? []).filter((t) => now - t < HOUR);
@@ -99,10 +103,11 @@ export class Accounts {
   }
 
   /** Check the code; on success create the account (first time) and return a session token. */
-  async verify(rawEmail: unknown, rawCode: unknown): Promise<Result<{ token: string; account: Account }>> {
+  async verify(rawEmail: unknown, rawCode: unknown, adminOnly = false): Promise<Result<{ token: string; account: Account }>> {
     const email = cleanEmail(rawEmail);
     const code = String(rawCode ?? "").replace(/\s+/g, "");
     if (!email || !/^\d{6}$/.test(code)) return { ok: false, status: 400, error: "Enter the 6-digit code." };
+    if (adminOnly && !this.isAdmin(email)) return NOT_ADMIN;
     const now = this.clock();
 
     const w = this.wrong.get(email);

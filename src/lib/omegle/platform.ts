@@ -86,8 +86,8 @@ export class Platform {
         if (request.method !== "POST") return json({ ok: false, error: "Method not allowed." }, 405);
         const body = await this.readBody(request);
         if (!body) return json({ ok: false, error: "Invalid JSON." }, 400);
-        if (path === "/api/auth/start") return this.send(await this.accounts.start(body.email, ip));
-        if (path === "/api/auth/verify") return this.send(await this.accounts.verify(body.email, body.code));
+        if (path === "/api/auth/start") return this.send(await this.accounts.start(body.email, ip, body.admin === true));
+        if (path === "/api/auth/verify") return this.send(await this.accounts.verify(body.email, body.code, body.admin === true));
         await this.accounts.logout(this.bearer(request));
         return json({ ok: true });
       }

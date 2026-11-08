@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { Platform, type PlatformEnv } from "./platform.ts";
 import { MemoryStore } from "./store.ts";
-import { consoleVerifier, smartbaseVerifier } from "./verifier.ts";
+import { consoleVerifier, readVerdict, smartbaseVerifier } from "./verifier.ts";
 
 const MIN = 60_000;
 let n = 0;
@@ -134,6 +134,38 @@ describe("admin dashboard", () => {
   });
 });
 
+describe("admin sign-in is only for admins", () => {
+  it("refuses other emails on the admin page without sending them a code", async () => {
+    const { call, verifier } = setup({ ADMIN_EMAILS: "boss@example.com" });
+    const no = await call("/api/auth/start", { email: "random@example.com", admin: true });
+    assert.equal(no.status, 403);
+    assert.equal(verifier.codes.size, 0, "no code was sent");
+    const yes = await call("/api/auth/start", { email: "Boss@Example.com", admin: true });
+    assert.equal(yes.status, 200);
+    assert.equal(verifier.codes.size, 1);
+  });
+
+  it("will not verify or create an account for a non-admin through the admin page", async () => {
+    const { call, verifier } = setup({ ADMIN_EMAILS: "boss@example.com" });
+    await call("/api/auth/start", { email: "random@example.com" }); // a normal sign-up is fine
+    const code = verifier.codes.get("random@example.com")!;
+    const viaAdmin = await call("/api/auth/verify", { email: "random@example.com", code, admin: true });
+    assert.equal(viaAdmin.status, 403);
+    assert.equal(viaAdmin.body.token, undefined);
+    // …and a normal account still cannot read the user list.
+    const normal = await call("/api/auth/verify", { email: "random@example.com", code });
+    const list = await call("/api/admin/users", undefined, { authorization: `Bearer ${normal.body.token}` });
+    assert.equal(list.status, 403);
+  });
+
+  it("nobody is an admin when ADMIN_EMAILS is not set", async () => {
+    const { call, signIn } = setup({});
+    const token = await signIn("anyone@example.com");
+    assert.equal((await call("/api/admin/users", undefined, { authorization: `Bearer ${token}` })).status, 403);
+    assert.equal((await call("/api/auth/start", { email: "anyone@example.com", admin: true })).status, 403);
+  });
+});
+
 describe("chat time limits", () => {
   it("gives guests 10 minutes in total, and never refreshes it", async () => {
     const { chatter, chatFor, advance } = setup();
@@ -253,6 +285,36 @@ describe("Smartbase verifier", () => {
     assert.equal(seen[0].url, "https://smartemail.de5.net/api/v1/send-verification");
     assert.equal(seen[0].key, "sb_live_test");
     assert.deepEqual(seen[1].body, { email: "x@y.co", code: "123456" });
+  });
+
+  it("reads Smartbase's answers strictly and never guesses", () => {
+    assert.equal(readVerdict({ valid: true }), true);
+    assert.equal(readVerdict({ verified: false }), false);
+    assert.equal(readVerdict({ success: true, email: "a@b.co" }), true);
+    assert.equal(readVerdict({ status: "Verified" }), true);
+    assert.equal(readVerdict({ status: "invalid" }), false);
+    assert.equal(readVerdict({ error: "Code expired" }), false);
+    assert.equal(readVerdict({ data: { valid: true } }), true);
+    assert.equal(readVerdict({ hello: "world" }), null, "unknown shape is not an approval");
+    assert.equal(readVerdict({}), null);
+    assert.equal(readVerdict("yes"), null);
+  });
+
+  it("does not let anyone in when the reply is not understood or is a server error", async () => {
+    const reply = (status: number, body: string) => (async () => new Response(status === 204 ? null : body, { status })) as unknown as typeof fetch;
+    const check = (f: typeof fetch) => smartbaseVerifier({ apiKey: "k", fetch: f }).check("a@b.co", "000000");
+    assert.equal(await check(reply(401, '{"error":"bad code"}')), false);
+    assert.equal(await check(reply(400, "")), false);
+    await assert.rejects(check(reply(200, '{"hello":"world"}')));
+    await assert.rejects(check(reply(200, "<html>oops</html>")));
+    await assert.rejects(check(reply(500, "boom")));
+    assert.equal(await check(reply(204, "")), true);
+    // Through the account system, an unrecognised reply is an error, never a sign-in.
+    const { Accounts } = await import("./accounts.ts");
+    const accounts = new Accounts(new MemoryStore(), smartbaseVerifier({ apiKey: "k", fetch: reply(200, '{"hello":"world"}') }), () => 1, ["a@b.co"]);
+    const res = await accounts.verify("a@b.co", "123456");
+    assert.equal(res.ok, false);
+    assert.equal(res.ok === false && res.status, 502);
   });
 
   it("reports a send failure instead of pretending it worked", async () => {

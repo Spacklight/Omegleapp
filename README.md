@@ -94,6 +94,14 @@ Put the app file in `cloudflare/spa/public/` and name it exactly **`talkivo.apk`
 
 Add `https://<your domain>/` as a *URL-prefix* property. If Google gives you an HTML verification file, ask for a one-line Worker patch to serve it (the Worker answers that exact path), or use the DNS method instead. Then submit `https://<your domain>/sitemap.xml`. `robots.txt` and `sitemap.xml` are in `cloudflare/spa/public/`; if your domain is not `talkivo.de5.net`, edit the address in `index.html`, `robots.txt`, `sitemap.xml` and `src/routes/__root.tsx`.
 
+## Docs, Privacy Policy, Terms
+
+User documentation, the Privacy Policy and the Terms & Conditions are plain static pages: `docs.html`, `privacy.html`, `terms.html`. They exist in **both** `cloudflare/spa/public/` (Cloudflare) and `public/` (Termux), so edit a page in both places. On Cloudflare they open at `/docs`, `/privacy` and `/terms` and are listed in `sitemap.xml`. The app's start screen links to them and shows "Built by Miyoni" with the contact email `prof200619@gmail.com`. These texts describe what the app really does today (what is stored, who processes it); update them if you change that, and have a lawyer review them before relying on them.
+
+## Admin access
+
+Only the emails in `ADMIN_EMAILS` can use `/admin`. The admin page's sign-in refuses every other address *before* sending it a code, the server checks again before showing the user list, and with `ADMIN_EMAILS` unset nobody is an admin. Signing in as an admin on the main app page also works, since it is the same account.
+
 ## Tests
 
 

@@ -119,7 +119,8 @@ export function AdminPage() {
         <section className="mt-6 max-w-sm rounded-xl border border-line bg-surface p-5">
           <h2 className="font-semibold">Sign in to continue</h2>
           <AuthPanel
-            intro="Use the admin email address."
+            admin
+            intro="Only admin email addresses can sign in here."
             onDone={(account: Account) => {
               void refresh();
               if (account.admin) void load();

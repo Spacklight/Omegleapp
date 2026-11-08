@@ -5,7 +5,16 @@ import { api, setToken, type Account } from "./account";
  * Create an account or sign in: type your email, get a 6-digit code, type it.
  * Same two steps either way — a new email simply becomes a new account.
  */
-export function AuthPanel({ onDone, intro }: { onDone: (account: Account) => void; intro?: string }) {
+export function AuthPanel({
+  onDone,
+  intro,
+  admin = false,
+}: {
+  onDone: (account: Account) => void;
+  intro?: string;
+  /** Sign-in for the admin page: the server refuses any email that is not an admin. */
+  admin?: boolean;
+}) {
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -28,7 +37,7 @@ export function AuthPanel({ onDone, intro }: { onDone: (account: Account) => voi
     setBusy(true);
     setError(null);
     try {
-      await api("/api/auth/start", { email: email.trim() });
+      await api("/api/auth/start", { email: email.trim(), admin });
       setStep("code");
       setCode("");
       setCool(45);
@@ -46,6 +55,7 @@ export function AuthPanel({ onDone, intro }: { onDone: (account: Account) => voi
       const data = await api<{ ok: true; token: string; account: { email: string } }>("/api/auth/verify", {
         email: email.trim(),
         code: code.replace(/\s+/g, ""),
+        admin,
       });
       setToken(data.token);
       const me = await api<{ ok: true; account: Account | null }>("/api/auth/me");

@@ -977,6 +977,26 @@ export function OmegleApp() {
                 <button type="button" onClick={openPair} className="mt-1 min-h-11 w-full text-sm text-muted">
                   Testing alone? Open another tab and you’ll meet each other.
                 </button>
+                <nav
+                  aria-label="About Talkivo"
+                  className="mt-1 flex flex-wrap items-center justify-center gap-x-1 text-xs text-muted"
+                >
+                  <a className="inline-flex min-h-8 items-center px-1.5 underline" href="/docs.html">
+                    Docs
+                  </a>
+                  <a className="inline-flex min-h-8 items-center px-1.5 underline" href="/privacy.html">
+                    Privacy
+                  </a>
+                  <a className="inline-flex min-h-8 items-center px-1.5 underline" href="/terms.html">
+                    Terms
+                  </a>
+                  <span className="px-1.5">
+                    Built by Miyoni ·{" "}
+                    <a className="underline" href="mailto:prof200619@gmail.com">
+                      prof200619@gmail.com
+                    </a>
+                  </span>
+                </nav>
               </div>
             </div>
           </div>
